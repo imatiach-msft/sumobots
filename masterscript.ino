@@ -303,7 +303,7 @@ void loop()
   else  // otherwise, search for opponent by moving in circles
   {
     Serial.println("search");
-    setForwardSpeed(SearchSpeed);
+    motors.setSpeeds(0, 0);
     turn_slightly(LEFT);
   }
 }
@@ -319,7 +319,7 @@ void turn_slightly(char direction)
   motors.setSpeeds(TURN_SPEED * direction, -TURN_SPEED * direction);
   delay(SLIGHT_TURN_DURATION);
   int speed = getForwardSpeed();
-  motors.setSpeeds(speed, speed);
+  motors.setSpeeds(0, 0);
   last_turn_time = millis();
 }
 
