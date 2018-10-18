@@ -304,13 +304,14 @@ void loop()
   {
     Serial.println("search");
     setForwardSpeed(SearchSpeed);
-    int rand_action = random(20);
-    if (rand_action <= 18) {
-      turn_slightly(LEFT);
-    } else {
-      int speed = getForwardSpeed();
-      motors.setSpeeds(speed, speed);
-    }
+    turn_slightly(LEFT);
+    // int rand_action = random(20);
+    // if (rand_action <= 18) {
+    //   turn_slightly(LEFT);
+    // } else {
+    //   int speed = getForwardSpeed();
+    //   motors.setSpeeds(speed, speed);
+    // }
   }
 }
 
@@ -319,7 +320,7 @@ void turn_slightly(char direction)
   // assume contact lost
   on_contact_lost();
 
-  int SLIGHT_TURN_DURATION = 300;
+  int SLIGHT_TURN_DURATION = 100;
 
   static unsigned int duration_increment = TURN_DURATION / 4;
   motors.setSpeeds(TURN_SPEED * direction, -TURN_SPEED * direction);
