@@ -50,7 +50,7 @@ Pushbutton button(ZUMO_BUTTON); // pushbutton on pin 12
 #define NUM_SENSORS 6
 unsigned int sensor_values[NUM_SENSORS];
 // this might need to be tuned for different lighting conditions, surfaces, etc.
-#define QTR_THRESHOLD  1500 // microseconds
+#define QTR_THRESHOLD  1500
 ZumoReflectanceSensorArray sensors(QTR_NO_EMITTER_PIN);
 
 // Motor Settings
@@ -212,6 +212,7 @@ void loop()
   }
   bool switch_off_movement = false;
   int distance_threshold = 35;
+  int charge_threshold = 20;
 
   // value from sensor * (5/1024)
   float volts = analogRead(A0)*0.0048828125;
@@ -228,13 +229,20 @@ void loop()
   Serial.println("Range finder distance3: ");
   Serial.println(distance3);
 
-  // if two out of three are less than 300, consider there is indeed someone ahead of us!
+  // If all three state opponent ahead, they indeed must be ahead
   bool close1 = distance < distance_threshold;
-  bool close2 = distance < distance_threshold;
-  bool close3 = distance < distance_threshold;
+  bool close2 = distance2 < distance_threshold;
+  bool close3 = distance3 < distance_threshold;
   bool opponentAhead = false;
-  if (close1 && close2 || close2 && close3 || close1 && close3) {
+  if (close1 && close2 && close3) {
     opponentAhead = true;
+  }
+  bool charge1 = distance < charge_threshold;
+  bool charge2 = distance2 < charge_threshold;
+  bool charge3 = distance3 < charge_threshold;
+  bool chargeOpponent = false;
+  if (charge1 && charge2 && charge3) {
+    chargeOpponent = true;
   }
 
   loop_start_time = millis();
@@ -246,7 +254,7 @@ void loop()
     // don't do any movement for diagnostics!!!
     return;
   }
-  if (!opponentAhead && (_forwardSpeed == FullSpeed) && (loop_start_time - full_speed_start_time > FULL_SPEED_DURATION_LIMIT))
+  if (!chargeOpponent && (_forwardSpeed == FullSpeed) && (loop_start_time - full_speed_start_time > FULL_SPEED_DURATION_LIMIT))
   {
     setForwardSpeed(SustainedSpeed);
   }
@@ -260,15 +268,35 @@ void loop()
     // if rightmost sensor detects line, reverse and turn to the left
     turn(LEFT, true);
   }
-  else if (check_for_contact() || opponentAhead)
+  else if (chargeOpponent)
   {
     // destroy opponent!
     on_contact_made();
     int speed = getForwardSpeed();
     motors.setSpeeds(speed, speed);
   }
-  else  // otherwise, search or move straight randomly
+  else if (opponentAhead)
   {
+    // get closer to opponent... but without full speed ahead!
+    int speed = getForwardSpeed();
+    motors.setSpeeds(speed, speed);
+  }
+  else if (check_for_contact())
+  {
+    // we've made contact, but the opponent doesn't seem to be in front of us!!!
+    // try to evade them??
+    if (lsm303.x_avg() > 0)
+    {
+      evade(RIGHT);
+    }
+    else
+    {
+      evade(LEFT);
+    }
+  }
+  else  // otherwise, search for opponent by moving in circles
+  {
+    setForwardSpeed(SearchSpeed);
     int rand_action = random(20);
     if (rand_action == 0)
     {
@@ -285,7 +313,7 @@ void loop()
 
 void turn_slightly(char direction)
 {
-    // assume contact lost
+  // assume contact lost
   on_contact_lost();
 
   int SLIGHT_TURN_DURATION = TURN_DURATION;
@@ -293,6 +321,25 @@ void turn_slightly(char direction)
   static unsigned int duration_increment = TURN_DURATION / 4;
   motors.setSpeeds(TURN_SPEED * direction, -TURN_SPEED * direction);
   delay(SLIGHT_TURN_DURATION);
+  int speed = getForwardSpeed();
+  motors.setSpeeds(speed, speed);
+  last_turn_time = millis();
+}
+
+// evade opponent
+void evade(char direction)
+{
+#ifdef LOG_SERIAL
+  Serial.print("evading ...");
+  Serial.println();
+#endif
+  on_contact_lost();
+  static unsigned int duration_increment = TURN_DURATION / 4;
+  // motors.setSpeeds(-FULL_SPEED, -FULL_SPEED);
+  // delay(REVERSE_DURATION);
+  motors.setSpeeds(TURN_SPEED * direction, -TURN_SPEED * direction);
+  // delay(TURN_DURATION);
+  delay(TURN_DURATION * 3);
   int speed = getForwardSpeed();
   motors.setSpeeds(speed, speed);
   last_turn_time = millis();
