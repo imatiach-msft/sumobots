@@ -305,13 +305,6 @@ void loop()
     Serial.println("search");
     setForwardSpeed(SearchSpeed);
     turn_slightly(LEFT);
-    // int rand_action = random(20);
-    // if (rand_action <= 18) {
-    //   turn_slightly(LEFT);
-    // } else {
-    //   int speed = getForwardSpeed();
-    //   motors.setSpeeds(speed, speed);
-    // }
   }
 }
 
@@ -341,7 +334,7 @@ void evade(char direction)
   static unsigned int duration_increment = TURN_DURATION / 4;
   // motors.setSpeeds(-FULL_SPEED, -FULL_SPEED);
   // delay(REVERSE_DURATION);
-  motors.setSpeeds(TURN_SPEED * direction, -TURN_SPEED * direction);
+  motors.setSpeeds(FULL_SPEED * direction, -FULL_SPEED * direction);
   // delay(TURN_DURATION);
   delay(TURN_DURATION * 3);
   int speed = getForwardSpeed();
