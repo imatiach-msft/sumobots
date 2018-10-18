@@ -37,7 +37,7 @@
 #include <Wire.h>
 #include <ZumoShield.h>
 
-#define LOG_SERIAL // write log output to serial port
+// #define LOG_SERIAL // write log output to serial port
 
 #define LED 13
 Pushbutton button(ZUMO_BUTTON); // pushbutton on pin 12
@@ -210,92 +210,32 @@ void loop()
     button.waitForRelease();
     waitForButtonAndCountDown(true);
   }
-  bool switch_off_movement = false;
-  int distance_threshold = 35;
-
-  // value from sensor * (5/1024)
-  float volts = analogRead(A0)*0.0048828125;
-  // worked out from datasheet graph
-  int distance = 13 * pow(volts, -1);
-  Serial.println("Range finder distance: ");
-  Serial.println(distance);
-  float volts2 = analogRead(A0)*0.0048828125;
-  int distance2 = 13 * pow(volts, -1);
-  Serial.println("Range finder distance2: ");
-  Serial.println(distance2);
-  float volts3 = analogRead(A0)*0.0048828125;
-  int distance3 = 13 * pow(volts, -1);
-  Serial.println("Range finder distance3: ");
-  Serial.println(distance3);
-
-  // if two out of three are less than 300, consider there is indeed someone ahead of us!
-  bool close1 = distance < distance_threshold;
-  bool close2 = distance < distance_threshold;
-  bool close3 = distance < distance_threshold;
-  bool opponentAhead = false;
-  if (close1 && close2 || close2 && close3 || close1 && close3) {
-    opponentAhead = true;
-  }
 
   loop_start_time = millis();
   lsm303.readAcceleration(loop_start_time);
   sensors.read(sensor_values);
 
-  if (switch_off_movement)
-  {
-    // don't do any movement for diagnostics!!!
-    return;
-  }
-  if (!opponentAhead && (_forwardSpeed == FullSpeed) && (loop_start_time - full_speed_start_time > FULL_SPEED_DURATION_LIMIT))
+  if ((_forwardSpeed == FullSpeed) && (loop_start_time - full_speed_start_time > FULL_SPEED_DURATION_LIMIT))
   {
     setForwardSpeed(SustainedSpeed);
   }
-  if (sensor_values[0] < QTR_THRESHOLD || sensor_values[1] < QTR_THRESHOLD)
+
+  if (sensor_values[0] < QTR_THRESHOLD)
   {
     // if leftmost sensor detects line, reverse and turn to the right
     turn(RIGHT, true);
   }
-  else if (sensor_values[5] < QTR_THRESHOLD || sensor_values[4] < QTR_THRESHOLD)
+  else if (sensor_values[5] < QTR_THRESHOLD)
   {
     // if rightmost sensor detects line, reverse and turn to the left
     turn(LEFT, true);
   }
-  else if (check_for_contact() || opponentAhead)
+  else  // otherwise, go straight
   {
-    // destroy opponent!
-    on_contact_made();
+    if (check_for_contact()) on_contact_made();
     int speed = getForwardSpeed();
     motors.setSpeeds(speed, speed);
   }
-  else  // otherwise, search or move straight randomly
-  {
-    int rand_action = random(20);
-    if (rand_action == 0)
-    {
-      turn_slightly(LEFT);
-    } else if (rand_action == 1)
-    {
-      turn_slightly(RIGHT);
-    } else {
-      int speed = getForwardSpeed();
-      motors.setSpeeds(speed, speed);
-    }
-  }
-}
-
-void turn_slightly(char direction)
-{
-    // assume contact lost
-  on_contact_lost();
-
-  int SLIGHT_TURN_DURATION = TURN_DURATION;
-
-  static unsigned int duration_increment = TURN_DURATION / 4;
-  motors.setSpeeds(TURN_SPEED * direction, -TURN_SPEED * direction);
-  delay(SLIGHT_TURN_DURATION);
-  int speed = getForwardSpeed();
-  motors.setSpeeds(speed, speed);
-  last_turn_time = millis();
 }
 
 // execute turn
