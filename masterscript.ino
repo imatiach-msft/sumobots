@@ -211,8 +211,8 @@ void loop()
     waitForButtonAndCountDown(true);
   }
   bool switch_off_movement = false;
-  int distance_threshold = 50;
-  int charge_threshold = 20;
+  int distance_threshold = 80;
+  int charge_threshold = 30;
 
   // value from sensor * (5/1024)
   float volts = analogRead(A0)*0.0048828125;
@@ -313,7 +313,7 @@ void turn_slightly(char direction)
   // assume contact lost
   on_contact_lost();
 
-  int SLIGHT_TURN_DURATION = 100;
+  int SLIGHT_TURN_DURATION = 100 * (random(2) + 1);
 
   static unsigned int duration_increment = TURN_DURATION / 4;
   motors.setSpeeds(TURN_SPEED * direction, -TURN_SPEED * direction);
