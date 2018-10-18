@@ -323,7 +323,7 @@ void turn_slightly(char direction)
   // assume contact lost
   on_contact_lost();
 
-  int SLIGHT_TURN_DURATION = TURN_DURATION;
+  int SLIGHT_TURN_DURATION = 100;
 
   static unsigned int duration_increment = TURN_DURATION / 4;
   motors.setSpeeds(TURN_SPEED * direction, -TURN_SPEED * direction);
