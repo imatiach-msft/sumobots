@@ -211,7 +211,7 @@ void loop()
     waitForButtonAndCountDown(true);
   }
   bool switch_off_movement = false;
-  int distance_threshold = 35;
+  int distance_threshold = 50;
   int charge_threshold = 20;
 
   // value from sensor * (5/1024)
@@ -256,20 +256,24 @@ void loop()
   }
   if (!chargeOpponent && (_forwardSpeed == FullSpeed) && (loop_start_time - full_speed_start_time > FULL_SPEED_DURATION_LIMIT))
   {
+    Serial.println("Set sustained speed");
     setForwardSpeed(SustainedSpeed);
   }
   if (sensor_values[0] < QTR_THRESHOLD || sensor_values[1] < QTR_THRESHOLD)
   {
+    Serial.println("Turn right");
     // if leftmost sensor detects line, reverse and turn to the right
     turn(RIGHT, true);
   }
   else if (sensor_values[5] < QTR_THRESHOLD || sensor_values[4] < QTR_THRESHOLD)
   {
+    Serial.println("Turn left");
     // if rightmost sensor detects line, reverse and turn to the left
     turn(LEFT, true);
   }
   else if (chargeOpponent)
   {
+    Serial.println("charge!!");
     // destroy opponent!
     on_contact_made();
     int speed = getForwardSpeed();
@@ -277,12 +281,14 @@ void loop()
   }
   else if (opponentAhead)
   {
+    Serial.println("go forward");
     // get closer to opponent... but without full speed ahead!
     int speed = getForwardSpeed();
     motors.setSpeeds(speed, speed);
   }
   else if (check_for_contact())
   {
+    Serial.println("evade");
     // we've made contact, but the opponent doesn't seem to be in front of us!!!
     // try to evade them??
     if (lsm303.x_avg() > 0)
@@ -296,6 +302,7 @@ void loop()
   }
   else  // otherwise, search for opponent by moving in circles
   {
+    Serial.println("search");
     setForwardSpeed(SearchSpeed);
     int rand_action = random(20);
     if (rand_action == 0)
