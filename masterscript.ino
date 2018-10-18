@@ -37,7 +37,7 @@
 #include <Wire.h>
 #include <ZumoShield.h>
 
-// #define LOG_SERIAL // write log output to serial port
+#define LOG_SERIAL // write log output to serial port
 
 #define LED 13
 Pushbutton button(ZUMO_BUTTON); // pushbutton on pin 12
@@ -211,6 +211,13 @@ void loop()
     waitForButtonAndCountDown(true);
   }
 
+  float volts = analogRead(A0)*0.0048828125;  // value from sensor * (5/1024)
+  int distance = 13 * pow(volts, -1); // worked out from datasheet graph
+  delay(1000); // slow down serial port
+  
+  Serial.println("Range finder distance: ");
+  Serial.println(distance);   // print the distance
+
   loop_start_time = millis();
   lsm303.readAcceleration(loop_start_time);
   sensors.read(sensor_values);
@@ -223,18 +230,18 @@ void loop()
   if (sensor_values[0] < QTR_THRESHOLD)
   {
     // if leftmost sensor detects line, reverse and turn to the right
-    turn(RIGHT, true);
+    // turn(RIGHT, true);
   }
   else if (sensor_values[5] < QTR_THRESHOLD)
   {
     // if rightmost sensor detects line, reverse and turn to the left
-    turn(LEFT, true);
+    // turn(LEFT, true);
   }
   else  // otherwise, go straight
   {
-    if (check_for_contact()) on_contact_made();
-    int speed = getForwardSpeed();
-    motors.setSpeeds(speed, speed);
+    // if (check_for_contact()) on_contact_made();
+    // int speed = getForwardSpeed();
+    // motors.setSpeeds(speed, speed);
   }
 }
 
